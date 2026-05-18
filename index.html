@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NexusCalc</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+overflow:hidden;
+font-family:Segoe UI,sans-serif;
+background:linear-gradient(135deg,#08121c,#15232e,#08121c);
+background-size:300% 300%;
+animation:bg 12s infinite alternate;
+padding:20px
+}
+@keyframes bg{
+0%{background-position:0 50%}
+100%{background-position:100% 50%}
+}
+
+#stars{
+position:fixed;
+inset:0;
+overflow:hidden;
+z-index:-1
+}
+.star{
+position:absolute;
+border-radius:50%;
+background:#fff;
+animation:twinkle 3s infinite alternate
+}
+@keyframes twinkle{
+from{opacity:.2}
+to{opacity:1}
+}
+
+.box{
+width:460px;
+max-width:95vw;
+padding:22px;
+border-radius:35px;
+background:rgba(10,20,30,.7);
+backdrop-filter:blur(15px);
+box-shadow:0 0 25px #0008,0 0 20px #0ff2 inset
+}
+
+.clock,.display{
+width:100%;
+border:none;
+border-radius:25px;
+text-align:right;
+padding:15px;
+margin-bottom:15px;
+background:#000a;
+color:#0ff;
+font-family:monospace
+}
+
+.clock{
+font-size:2rem;
+text-align:center;
+letter-spacing:3px
+}
+
+.display{
+font-size:2rem;
+outline:none
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:10px
+}
+
+button{
+height:58px;
+border:none;
+border-radius:20px;
+font-size:1.2rem;
+cursor:pointer;
+background:#1a2430;
+color:#fff;
+transition:.1s;
+box-shadow:0 4px #0008
+}
+
+button:active{
+transform:translateY(2px)
+}
+
+.op{background:#9a5518}
+.eq{background:#19703b}
+.cl{background:#8d2222}
+.fn{background:#24415a}
+
+.note{
+text-align:center;
+margin-top:10px;
+font-size:.7rem;
+color:#8fd
+}
+
+@media(max-width:520px){
+button{height:50px;font-size:1rem}
+.clock,.display{font-size:1.5rem}
+}
+</style>
+</head>
+
+<body>
+
+<div id="stars"></div>
+
+<div class="box">
+
+<div class="clock" id="clock"></div>
+
+<input class="display" id="d" readonly>
+
+<div class="grid">
+
+<button class="cl" onclick="clr()">C</button>
+<button class="fn" onclick="del()">⌫</button>
+<button class="fn" onclick="add('%')">%</button>
+<button class="fn" onclick="sq()">x²</button>
+<button class="op" onclick="add('/')">÷</button>
+
+<button onclick="add(7)">7</button>
+<button onclick="add(8)">8</button>
+<button onclick="add(9)">9</button>
+<button class="fn" onclick="sqrt()">√</button>
+<button class="op" onclick="add('*')">×</button>
+
+<button onclick="add(4)">4</button>
+<button onclick="add(5)">5</button>
+<button onclick="add(6)">6</button>
+<button class="op" onclick="add('-')">−</button>
+<button class="fn" onclick="add('(')">(</button>
+
+<button onclick="add(1)">1</button>
+<button onclick="add(2)">2</button>
+<button onclick="add(3)">3</button>
+<button class="op" onclick="add('+')">+</button>
+<button class="fn" onclick="add(')')">)</button>
+
+<button onclick="add(0)">0</button>
+<button onclick="add('.')">.</button>
+<button class="fn" onclick="sign()">±</button>
+<button class="eq" onclick="calc()">=</button>
+
+</div>
+
+<div class="note">✦ NEXUS CALC ✦</div>
+
+</div>
+
+<script>
+
+const d=document.getElementById("d")
+
+const val=()=>d.value
+const set=v=>d.value=v
+
+function add(v){set(val()+v)}
+function clr(){set('')}
+function del(){set(val().slice(0,-1))}
+
+function safe(e){
+e=e.replace(/÷/g,'/').replace(/×/g,'*')
+.replace(/(\d+)%/g,'($1/100)')
+return Function('return '+e)()
+}
+
+function calc(){
+try{
+let e=val()
+
+e=e.replace(/(\d+)([+\-])(\d+)%/g,
+(_,a,o,b)=>o=='+'?
++a+(a*b/100):
++a-(a*b/100)
+)
+
+let r=safe(e)
+
+if(!isFinite(r)) return set('Infinito')
+
+set(+r.toFixed(10))
+
+}catch{
+set('Erro')
+}
+}
+
+function sqrt(){
+try{
+let r=Math.sqrt(safe(val()))
+set(+r.toFixed(10))
+}catch{set('Erro')}
+}
+
+function sq(){
+try{
+let r=safe(val())
+set(+(r*r).toFixed(10))
+}catch{set('Erro')}
+}
+
+function sign(){
+try{
+set(-safe(val()))
+}catch{set('Erro')}
+}
+
+setInterval(()=>{
+clock.innerText=new Date().toLocaleTimeString('pt-BR')
+},1000)
+
+for(let i=0;i<180;i++){
+let s=document.createElement('div')
+s.className='star'
+let z=Math.random()*3
+s.style.cssText=`
+width:${z}px;
+height:${z}px;
+left:${Math.random()*100}%;
+top:${Math.random()*100}%;
+animation-delay:${Math.random()*3}s`
+stars.appendChild(s)
+}
+
+onkeydown=e=>{
+let k=e.key
+if(/[0-9.+\-*/()%]/.test(k)) add(k)
+if(k=='Enter') calc()
+if(k=='Backspace') del()
+if(k=='Escape') clr()
+}
+
+</script>
+
+</body>
+</html>
